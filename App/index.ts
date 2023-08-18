@@ -268,6 +268,9 @@ export default class App {
     if (result.length) {
       this._highlighter.position.copy(result[0].object.position);
       this._highlighter.rotation.copy(result[0].object.rotation);
+    } else {
+      this._highlighter.position.set(0, -2.1, 0);
+      this._highlighter.rotation.x = -Math.PI * 0.5;
     }
   }
 
