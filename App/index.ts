@@ -50,7 +50,8 @@ export default class App {
   private _collisionMeshes: ObjPool;
   private _highlighter: Line<BufferGeometry, LineBasicMaterial>;
   private _destroyMode: boolean = false;
-  private _selectedBlock: string = 'dirt';
+  private _blockOptions: string[] = ['dirt', 'stone'];
+  private _selectedBlock: string = this._blockOptions[0];
 
   constructor() {
     this._scene = new Scene();
@@ -134,6 +135,7 @@ export default class App {
 
   _initBlocks() {
     this._initBlock('/models/minecraft_grass_block.glb', 'dirt');
+    this._initBlock('/models/minecraft_stone_block.glb', 'stone');
   }
 
   _initBlock(modelPath: string, blockName: string) {
@@ -199,6 +201,7 @@ export default class App {
       if (value) this._highlighter.material.color.setHex(0xff0000);
       else this._highlighter.material.color.setHex(0x000000);
     });
+    gui.add(this, '_selectedBlock', this._blockOptions);
   }
 
   _initEvents() {
