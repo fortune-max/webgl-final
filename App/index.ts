@@ -201,6 +201,7 @@ export default class App {
     window.addEventListener('resize', this._onResize.bind(this));
     window.addEventListener('pointermove', this._onMouseMove.bind(this));
     window.addEventListener('click', this._onClick.bind(this));
+    window.addEventListener('touchstart', this._onClick.bind(this));
   }
 
   _initLights() {
