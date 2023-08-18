@@ -48,7 +48,7 @@ export default class App {
   private _raycaster: Raycaster;
   private _blocks: Record<string, ObjPool> = {};
   private _collisionMeshes: ObjPool;
-  private _highlighter: Line;
+  private _highlighter: Line<BufferGeometry, LineBasicMaterial>;
   private _destroyMode: boolean = false;
 
   constructor() {
@@ -191,9 +191,8 @@ export default class App {
 
   _initGui() {
     gui.add(this, '_destroyMode').onChange((value: boolean) => {
-      const highlighterMaterial = this._highlighter.material as LineBasicMaterial;
-      if (value) highlighterMaterial.color.setHex(0xff0000);
-      else highlighterMaterial.color.setHex(0x000000);
+      if (value) this._highlighter.material.color.setHex(0xff0000);
+      else this._highlighter.material.color.setHex(0x000000);
     });
   }
 
