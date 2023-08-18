@@ -22,12 +22,12 @@ import {
 
 import * as constants from  "./constants";
 import type { ObjPool } from "./types/global";
-import { castShadow, getNewBlockPos, getNewMeshPos, getNewMeshRot, getOldBlockPos, normalizeBlock } from './utils';
 import  Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { castShadow, getNewBlockPos, getNewMeshPos, getNewMeshRot, getOldBlockPos, normalizeBlock } from './utils';
 
 const gui = new GUI();
 const GL = new GLTFLoader();
@@ -50,6 +50,7 @@ export default class App {
   private _collisionMeshes: ObjPool;
   private _highlighter: Line<BufferGeometry, LineBasicMaterial>;
   private _destroyMode: boolean = false;
+  private _selectedBlock: string = 'dirt';
 
   constructor() {
     this._scene = new Scene();
@@ -81,7 +82,7 @@ export default class App {
     this._initFloor();
     this._initCollisionMeshes();
     this._initHighlighter();
-    this._initDirtBlock();
+    this._initBlocks();
     this._createSteve();
     this._initGui();
     this._render();
@@ -131,22 +132,26 @@ export default class App {
     }
   }
 
-  _initDirtBlock() {
-    GL.load('/models/minecraft_grass_block.glb', (model) => {
-      const dirtBlock = normalizeBlock(model.scene, gridSize);
-      castShadow(dirtBlock);
-      this._blocks.dirt = { mesh: dirtBlock, instances: [] };
+  _initBlocks() {
+    this._initBlock('/models/minecraft_grass_block.glb', 'dirt');
+  }
+
+  _initBlock(modelPath: string, blockName: string) {
+    GL.load(modelPath, (model) => {
+      const block = normalizeBlock(model.scene, gridSize);
+      castShadow(block);
+      this._blocks[blockName] = { mesh: block, instances: [] };
     });
   }
 
-  _spawnBlock(meshPos: Vector3, meshOrienation: string) {
+  _spawnBlock(meshPos: Vector3, meshOrienation: constants.MeshOrientation, blockName: string) {
     const blockPos = getNewBlockPos(meshPos, meshOrienation, gridSize);
-    const newBlock = this._blocks.dirt.mesh.clone() as Group;
+    const newBlock = this._blocks[blockName].mesh.clone() as Group;
     newBlock.userData.collisionMeshes = [];
     
     newBlock.position.copy(blockPos);
     this._scene.add(newBlock);
-    this._blocks.dirt.instances.push(newBlock);
+    this._blocks[blockName].instances.push(newBlock);
 
     for (let orientation=0; orientation<6; orientation++) {
       const collisionMesh = this._collisionMeshes.mesh.clone() as Mesh;
@@ -159,12 +164,12 @@ export default class App {
     }
   }
 
-  _destroyBlock(meshPos: Vector3, meshOrienation: constants.MeshOrientation) {
+  _destroyBlock(meshPos: Vector3, meshOrienation: constants.MeshOrientation, blockName: string) {
     const blockPos = getOldBlockPos(meshPos, meshOrienation, gridSize);
-    const blockIndex = this._blocks.dirt.instances.findIndex((block) => block.position.equals(blockPos));
+    const blockIndex = this._blocks[blockName].instances.findIndex((block) => block.position.equals(blockPos));
     if (blockIndex === -1) return;
-    const block = this._blocks.dirt.instances[blockIndex];
-    this._blocks.dirt.instances.splice(blockIndex, 1);
+    const block = this._blocks[blockName].instances[blockIndex];
+    this._blocks[blockName].instances.splice(blockIndex, 1);
     this._scene.remove(block);
 
     for (const collisionMesh of block.userData.collisionMeshes) {
@@ -244,8 +249,8 @@ export default class App {
     this._raycaster.setFromCamera(this._mouse, this._camera);
     const result = this._raycaster.intersectObjects(this._collisionMeshes.instances);
     if (result.length) {
-      if (this._destroyMode) this._destroyBlock(result[0].object.position, result[0].object.userData.meshOrientation);
-      else this._spawnBlock(result[0].object.position, result[0].object.userData.meshOrientation);
+      if (this._destroyMode) this._destroyBlock(result[0].object.position, result[0].object.userData.meshOrientation, this._selectedBlock);
+      else this._spawnBlock(result[0].object.position, result[0].object.userData.meshOrientation, this._selectedBlock);
     }
   }
 
