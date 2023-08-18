@@ -137,6 +137,7 @@ export default class App {
     this._initBlock('/models/minecraft_grass_block.glb', 'dirt');
     this._initBlock('/models/minecraft_stone_block.glb', 'stone');
     this._initBlock('/models/minecraft_diamond_block.glb', 'diamond');
+    this._initBlock('/models/minecraft_obsidian_block.glb', 'obsidian');
   }
 
   _initBlock(modelPath: string, blockName: string) {
