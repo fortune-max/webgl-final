@@ -255,7 +255,10 @@ export default class App {
     this._raycaster.setFromCamera(this._mouse, this._camera);
     const result = this._raycaster.intersectObjects(this._collisionMeshes.instances);
     if (result.length) {
-      if (this._destroyMode) this._destroyBlock(result[0].object.position, result[0].object.userData.meshOrientation, this._selectedBlock);
+      if (this._destroyMode)
+        this._blockOptions.forEach((blockName) => {
+          this._destroyBlock(result[0].object.position, result[0].object.userData.meshOrientation, blockName);
+        });
       else this._spawnBlock(result[0].object.position, result[0].object.userData.meshOrientation, this._selectedBlock);
     }
   }
