@@ -21,8 +21,8 @@ import {
 } from 'three';
 
 import * as constants from  "./constants";
-import type { BlockConfig, ObjPool } from "./types/global";
 import demoTemplates from "./templates/demo.json";
+import type { BlockConfig, ObjPool } from "./types/global";
 import  Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -54,6 +54,7 @@ export default class App {
   private _blockOptions: string[] = [];
   private _selectedBlock: string;
   private _template: string = "Pick a template";
+  private _audio: Record<string, HTMLAudioElement> = {};
 
   constructor() {
     this._scene = new Scene();
@@ -79,8 +80,8 @@ export default class App {
     new OrbitControls(this._camera, this._renderer.domElement);
 
     this._initEvents();
+    this._initAudio();
     this._initLights();
-    // this._initGrid();
     this._initEnvironment();
     this._initFloor();
     this._initCollisionMeshes();
@@ -92,10 +93,8 @@ export default class App {
     this._animate();
   }
 
-  _initGrid() {
-    const gridHelper = new GridHelper(sandboxSize, sandboxSize/gridSize, 0x0000ff, 0xff8080);
-    gridHelper.position.y = -2;
-    this._scene.add(gridHelper);
+  _initAudio() {
+    this._audio.spawnBlock = new Audio('/audio/spawn_block.mp3');
   }
 
   _initHighlighter() {
@@ -171,6 +170,7 @@ export default class App {
       this._scene.add(collisionMesh);
       newBlock.userData.collisionMeshes.push(collisionMesh);
     }
+    this._audio.spawnBlock.play();
   }
 
   _destroyBlock(meshPos: Vector3, meshOrienation: constants.MeshOrientation, blockName: string) {
@@ -187,6 +187,7 @@ export default class App {
       this._scene.remove(collisionMesh);
     }
     this._updateHighlighter();
+    this._audio.spawnBlock.play();
   }
 
   _createSteve() {
@@ -218,6 +219,14 @@ export default class App {
     for (const block of template)
       for (const pos of block.positions)
         this._spawnBlock(new Vector3(...pos), constants.MeshOrientation.TOP, block.block);
+  }
+
+  _serializeToTemplate() {
+    const template: BlockConfig[] = [];
+    for (const blockName in this._blocks)
+      for (const block of this._blocks[blockName].instances)
+        template.push({ block: blockName, positions: [[...block.position.toArray()]] });
+    console.log(JSON.stringify(template));
   }
 
   _initEvents() {
