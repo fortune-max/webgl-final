@@ -21,7 +21,8 @@ import {
 } from 'three';
 
 import * as constants from  "./constants";
-import type { ObjPool } from "./types/global";
+import type { BlockConfig, ObjPool } from "./types/global";
+import demoTemplates from "./templates/demo.json";
 import  Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -52,6 +53,7 @@ export default class App {
   private _destroyMode: boolean = false;
   private _blockOptions: string[] = [];
   private _selectedBlock: string;
+  private _template: string = "Pick a template";
 
   constructor() {
     this._scene = new Scene();
@@ -138,6 +140,7 @@ export default class App {
     this._initBlock('/models/minecraft_stone_block.glb', 'stone');
     this._initBlock('/models/minecraft_diamond_block.glb', 'diamond');
     this._initBlock('/models/minecraft_obsidian_block.glb', 'obsidian');
+    this._initBlock('/models/minecraft_oakplank_block.glb', 'oak_plank');
   }
 
   _initBlock(modelPath: string, blockName: string) {
@@ -206,6 +209,15 @@ export default class App {
       else this._highlighter.material.color.setHex(0x000000);
     });
     gui.add(this, '_selectedBlock', this._blockOptions);
+    gui.add(this, '_template', Object.keys(demoTemplates)).onChange((value: string) => {
+      this._buildTemplate(demoTemplates[value]);
+    });
+  }
+
+  _buildTemplate(template: BlockConfig[]) {
+    for (const block of template)
+      for (const pos of block.positions)
+        this._spawnBlock(new Vector3(...pos), constants.MeshOrientation.TOP, block.block);
   }
 
   _initEvents() {
