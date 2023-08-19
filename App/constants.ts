@@ -13,3 +13,5 @@ export enum MeshOrientation {
   RIGHT,
   BACK,
 }
+
+export const walkAnimSpeed = 0.02;

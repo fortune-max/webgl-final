@@ -13,11 +13,12 @@ import {
   PlaneGeometry,
   Vector3,
   Group,
-  GridHelper,
   Shape,
   BufferGeometry,
   Line,
   LineBasicMaterial,
+  AnimationMixer,
+  AnimationAction,
 } from 'three';
 
 import * as constants from  "./constants";
@@ -42,6 +43,9 @@ export default class App {
   private _camera: PerspectiveCamera;
   private _meshSteve: Group;
   private _meshSteveHead: Mesh;
+  private _steveWalkMixer: AnimationMixer;
+  private _steveWalkAction: AnimationAction;
+  private _lastWalkTimeMs: number = 0;
 
   private _stats: Stats;
   private _scene: Scene;
@@ -201,6 +205,8 @@ export default class App {
       });
       this._scene.add(steve);
       this._meshSteve = steve;
+      this._steveWalkMixer = new AnimationMixer(steve);
+      this._steveWalkAction = this._steveWalkMixer.clipAction(model.animations[1]);
     })
   }
 
@@ -234,6 +240,8 @@ export default class App {
     window.addEventListener('pointermove', this._onMouseMove.bind(this));
     window.addEventListener('click', this._onClick.bind(this));
     window.addEventListener('touchstart', this._onClick.bind(this));
+    window.addEventListener('keydown', this._onKeyDown.bind(this));
+    window.addEventListener('keyup', this._onKeyUp.bind(this));
   }
 
   _initLights() {
@@ -273,6 +281,20 @@ export default class App {
     this._renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  _onKeyDown(e: KeyboardEvent) {
+    if ("wasd".includes(e.key)){
+      if (!this._steveWalkAction.isRunning()) this._steveWalkAction.play();
+      this._lastWalkTimeMs = Date.now();
+    }
+  }
+
+  _onKeyUp(e: KeyboardEvent) {
+    if ("wasd".includes(e.key)) {
+      this._lastWalkTimeMs = 0;
+      this._steveWalkAction.stop();
+    }
+  }
+
   _onClick() {
     this._raycaster.setFromCamera(this._mouse, this._camera);
     const result = this._raycaster.intersectObjects(this._collisionMeshes.instances);
@@ -309,12 +331,18 @@ export default class App {
     }
   }
 
+  _updateWalkAnimation() {
+    if (Date.now() - this._lastWalkTimeMs < 500)
+      this._steveWalkMixer.update(constants.walkAnimSpeed);
+  }
+
   _render() {
     this._renderer.render(this._scene, this._camera);
   }
 
   _animate() {
     this._stats.begin();
+    this._updateWalkAnimation();
     window.requestAnimationFrame(this._animate.bind(this));
     this._renderer.render(this._scene, this._camera);
     this._stats.end();
