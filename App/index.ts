@@ -19,6 +19,8 @@ import {
   LineBasicMaterial,
   AnimationMixer,
   AnimationAction,
+  TextureLoader,
+  SRGBColorSpace,
 } from 'three';
 
 import * as constants from  "./constants";
@@ -34,6 +36,7 @@ import { castShadow, getNewBlockPos, getNewMeshPos, getNewMeshRot, getOldBlockPo
 const gui = new GUI();
 const GL = new GLTFLoader();
 const RL = new RGBELoader();
+const TL = new TextureLoader();
 
 const gridSize = 2;
 const sandboxSize = 40;
@@ -72,11 +75,13 @@ export default class App {
   _init() {
     this._renderer = new WebGLRenderer({
       canvas: document.getElementById('canvas') as HTMLCanvasElement,
+      antialias: true,
     });
     this._renderer.shadowMap.enabled = true;
     this._renderer.shadowMap.type = PCFSoftShadowMap;
     this._renderer.toneMapping = ACESFilmicToneMapping;
     this._renderer.setSize(window.innerWidth, window.innerHeight);
+    this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     const aspect = window.innerWidth / window.innerHeight;
     this._camera = new PerspectiveCamera(70, aspect, 0.1, 100);
@@ -252,27 +257,37 @@ export default class App {
 
   _initLights() {
     const dl = new DirectionalLight(0xffffff, 5);
-    dl.position.set(-5, 5, 4);
+    dl.position.set(-20, 40, 4);
     dl.castShadow = true;
     this._scene.add(dl);
 
-    dl.shadow.mapSize.width = 200;
-    dl.shadow.mapSize.height = 200;
     dl.shadow.camera.near = 0.5;
-    dl.shadow.camera.far = 20;
+    dl.shadow.camera.far = 55;
+    dl.shadow.camera.right = dl.shadow.camera.top = 50;
+    dl.shadow.camera.left = dl.shadow.camera.bottom = -50;
   }
 
   _initEnvironment() {
     RL.load('/envmaps/alps_field_2k.hdr', (t) => {
       t.mapping = EquirectangularReflectionMapping
-      this._scene.environment = t;
-      this._scene.background = t;
+      this._scene.environment = this._scene.background = t;
     });
   }
 
   _initFloor() {
     const geo = new PlaneGeometry(sandboxSize, sandboxSize);
-    const mat = new MeshStandardMaterial({ color: 0x444444 });
+    const map = TL.load('/floor/laterite/red_laterite_soil_stones_diff_1k.jpg');
+    const normalMap = TL.load('/floor/laterite/red_laterite_soil_stones_nor_gl_1k.jpg');
+    const roughnessMap = TL.load('/floor/laterite/red_laterite_soil_stones_rough_1k.png');
+    const displacementMap = TL.load('/floor/laterite/red_laterite_soil_stones_disp_1k.png');
+    map.colorSpace = normalMap.colorSpace = roughnessMap.colorSpace = displacementMap.colorSpace = SRGBColorSpace;
+    const mat = new MeshStandardMaterial({
+      map,
+      normalMap,
+      roughnessMap,
+      displacementMap,
+      displacementScale: 0.1,
+    });
     const mesh = new Mesh(geo, mat);
     mesh.rotation.x = -Math.PI * 0.5;
     mesh.position.y = -2;
