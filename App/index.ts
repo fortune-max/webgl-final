@@ -174,7 +174,7 @@ export default class App {
       const collisionMesh = this._collisionMeshes.mesh.clone() as Mesh;
       collisionMesh.position.copy(getNewMeshPos(blockPos, orientation, gridSize));
       collisionMesh.rotation.setFromVector3(getNewMeshRot(orientation));
-      collisionMesh.userData = { meshOrientation: orientation };
+      collisionMesh.userData = { meshOrientation: orientation, blockName };
       this._collisionMeshes.instances.push(collisionMesh);
       this._scene.add(collisionMesh);
       newBlock.userData.collisionMeshes.push(collisionMesh);
@@ -320,11 +320,9 @@ export default class App {
     this._raycaster.setFromCamera(this._mouse, this._camera);
     const result = this._raycaster.intersectObjects(this._collisionMeshes.instances);
     if (result.length) {
-      if (this._destroyMode)
-        this._blockOptions.forEach((blockName) => {
-          this._destroyBlock(result[0].object.position, result[0].object.userData.meshOrientation, blockName);
-        });
-      else this._spawnBlock(result[0].object.position, result[0].object.userData.meshOrientation, this._selectedBlock);
+      const {blockName, meshOrientation} = result[0].object.userData;
+      if (this._destroyMode) this._destroyBlock(result[0].object.position, meshOrientation, blockName);
+      else this._spawnBlock(result[0].object.position, meshOrientation, this._selectedBlock);
     }
   }
 
