@@ -229,9 +229,15 @@ export default class App {
 
   _serializeToTemplate() {
     const template: BlockConfig[] = [];
-    for (const blockName in this._blocks)
-      for (const block of this._blocks[blockName].instances)
-        template.push({ block: blockName, positions: [[...block.position.toArray()]] });
+    for (const blockName in this._blocks) {
+      const block = this._blocks[blockName];
+      const blockConfig: BlockConfig = { block: blockName, positions: [] };
+      for (const blockInstance of block.instances) {
+        const pos = blockInstance.position;
+        blockConfig.positions.push([pos.x, pos.y, pos.z]);
+      }
+      if (blockConfig.positions.length) template.push(blockConfig);
+    }
     console.log(JSON.stringify(template));
   }
 
@@ -282,10 +288,10 @@ export default class App {
   }
 
   _onKeyDown(e: KeyboardEvent) {
-    if ("wasd".includes(e.key)){
+    if ("wasd".includes(e.key)) {
       if (!this._steveWalkAction.isRunning()) this._steveWalkAction.play();
       this._lastWalkTimeMs = Date.now();
-    }
+    } else if (e.key === 't') this._serializeToTemplate();
   }
 
   _onKeyUp(e: KeyboardEvent) {
@@ -325,10 +331,7 @@ export default class App {
     if (result.length) {
       this._highlighter.position.copy(result[0].object.position);
       this._highlighter.rotation.copy(result[0].object.rotation);
-    } else {
-      this._highlighter.position.set(0, -2.1, 0);
-      this._highlighter.rotation.x = -Math.PI * 0.5;
-    }
+    } else this._highlighter.position.set(-1000, -1000, -1000);
   }
 
   _updateWalkAnimation() {
